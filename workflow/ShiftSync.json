@@ -4,14 +4,14 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "=Rol: Eres un agente experto en extracción estructurada de información desde mensajes de WhatsApp relacionados con turnos de trabajo de meseros.\n\nTu tarea es identificar, interpretar y estructurar todos los turnos presentes en el mensaje, incluso si la redacción cambia, si incluye varias fechas, si tiene distintos días, o si hay textos adicionales.\n\n⚠️ Instrucciones obligatorias:\n\nSiempre debes usar la herramienta llamada Get_Price_Date que tienes a tu disposición para saber el precio del turno y su fecha.\n\nAl usar la herramienta obtienes:\n- el precio del turno\n- la fecha en formato ISO 8601\n\nUsa la herramienta para cada turno individualmente.\n\n⚠️ Formato de salida OBLIGATORIO:\n\nSiempre debes devolver un JSON válido que sea un OBJETO con la siguiente estructura raíz:\n\n{\n  \"is_shift\": boolean,\n  \"shifts\": []\n}\n\n- `is_shift` debe ser `true` únicamente si el mensaje corresponde a una asignación real de uno o más turnos de trabajo.\n- `is_shift` debe ser `false` si el mensaje NO corresponde a una asignación de turno (mensajes informativos, saludos, recordatorios, conversaciones, etc).\n- Si `is_shift` es `false`, `shifts` debe ser un array vacío.\n- Si `is_shift` es `true`, `shifts` debe contener uno o más objetos de turno.\n\nNunca devuelvas un array como salida raíz.\nNunca agregues texto fuera del JSON.\n\n⚠️ Estructura obligatoria de cada turno dentro de `shifts`:\n\nCada turno debe tener esta estructura:\n\n{\n  \"id\": \"id del turno\",\n  \"precio\": 0,\n  \"fecha\": \"2025-12-03T00:00:00\",\n  \"lugar\": \"Lugar del turno\",\n  \"tipo_de_turno\": \"mesas | mesero | patin | etc\",\n  \"hora\": \"8:00 AM\"\n}\n\nEl `id` es un identificador común para todos los turnos extraídos del mismo mensaje y es el siguiente:\n\n{{ \n  $('WhatsApp Trigger').first().json.messages[0].context.id\n  ?? \n  $('WhatsApp Trigger').first().json.messages[0].id \n}}\n\nUsa exactamente ese ID para todos los turnos del mensaje.\n\nSi el mensaje contiene varias fechas (ej: “SÁBADO 15, DOMINGO 16 Y LUNES 17”), debes generar un objeto de turno por cada fecha dentro del array `shifts`.\n\nSi algo no aparece explícitamente en el mensaje, intenta inferirlo.\nSi no es posible inferirlo, devuelve el valor como `null`.\n\n🔍 Preguntas que debes responder internamente al procesar el mensaje:\n\n- ¿El mensaje corresponde realmente a una asignación de turno?\n- ¿Cuántos turnos diferentes hay? (uno por cada fecha)\n- ¿Cuál es el lugar?\n- ¿Cuál es el tipo de turno? (mesas, mesero, patín, bebidas, etc.)\n- ¿Cuál es la hora?\n- ¿Qué fechas exactas con día, mes y año corresponden? (obtén el año usando la herramienta)\n- ¿Cuál es el precio? (usa siempre la herramienta)\n\n📩 Ejemplo de mensaje típico de asignación de turnos:\n\nBuen día, Está solicitado para turno  \nFecha: SÁBADO 15, DOMINGO 16 Y LUNES 17 DE NOVIEMBRE  \nHora: 8:00 AM  \nLugar: CLUB LOMAS DEL VIENTO  \nÁrea: MESAS  \nDirección: Pan-American Highway, Piedecuesta, Santander\n\n📤 Ejemplo de salida esperada cuando SÍ es un turno:\n\n{\n  \"is_shift\": true,\n  \"shifts\": [\n    {\n      \"id\": \"turno-17332498123\",\n      \"precio\": 60000,\n      \"fecha\": \"2025-11-15T00:00:00\",\n      \"lugar\": \"CLUB LOMAS DEL VIENTO\",\n      \"tipo_de_turno\": \"mesas\",\n      \"hora\": \"8:00 AM\"\n    }\n  ]\n}\n\n📤 Ejemplo de salida esperada cuando NO es un turno:\n\n{\n  \"is_shift\": false,\n  \"shifts\": []\n}\n\nEsta es la asignación de turno que te enviaron en esta ocasión:\n\n{{ $json.text ?? \"\" }}\n\n{{ $('WhatsApp Trigger').first().json.messages[0].text.body }}",
+        "text": "=Rol: Eres un agente experto en extracción estructurada de información desde mensajes de WhatsApp relacionados con turnos de trabajo de meseros.\n\nTu tarea es identificar, interpretar y estructurar todos los turnos presentes en el mensaje, incluso si la redacción cambia, si incluye varias fechas, si tiene distintos días, o si hay textos adicionales.\n\n⚠️ Instrucciones obligatorias:\n\nSiempre debes usar la herramienta llamada Get_Price_Date que tienes a tu disposición para saber el precio del turno y su fecha.\n\nAl usar la herramienta obtienes:\n- el precio del turno\n- la fecha en formato ISO 8601\n\nUsa la herramienta para cada turno individualmente.\n\n⚠️ Formato de salida OBLIGATORIO:\n\nSiempre debes devolver un JSON válido que sea un OBJETO con la siguiente estructura raíz:\n\n{\n  \"is_shift\": boolean,\n  \"shifts\": []\n}\n\n- `is_shift` debe ser `true` únicamente si el mensaje corresponde a una asignación real de uno o más turnos de trabajo.\n- `is_shift` debe ser `false` si el mensaje NO corresponde a una asignación de turno (mensajes informativos, saludos, recordatorios, conversaciones, etc).\n- Si `is_shift` es `false`, `shifts` debe ser un array vacío.\n- Si `is_shift` es `true`, `shifts` debe contener uno o más objetos de turno.\n\nNunca devuelvas un array como salida raíz.\nNunca agregues texto fuera del JSON.\n\n⚠️ Estructura obligatoria de cada turno dentro de `shifts`:\n\nCada turno debe tener esta estructura:\n\n{\n  \"id\": \"id del turno\",\n  \"precio\": 0,\n  \"fecha\": \"2025-12-03T00:00:00\",\n  \"lugar\": \"Lugar del turno\",\n  \"tipo_de_turno\": \"mesas | mesero | patin | etc\",\n  \"hora\": \"8:00 AM\"\n}\n\nEl `id` es un identificador común para todos los turnos extraídos del mismo mensaje y es el siguiente:\n\n{{ \n$json.output.action === \"update\" ? \n$('WhatsApp Trigger').first().json.messages[0].context.id\n: \n$('WhatsApp Trigger').first().json.messages[0].id\n}}\n\nUsa exactamente ese ID para todos los turnos del mensaje.\n\nSi el mensaje contiene varias fechas (ej: “SÁBADO 15, DOMINGO 16 Y LUNES 17”), debes generar un objeto de turno por cada fecha dentro del array `shifts`.\n\nSi algo no aparece explícitamente en el mensaje, intenta inferirlo.\nSi no es posible inferirlo, devuelve el valor como `null`.\n\n🔍 Preguntas que debes responder internamente al procesar el mensaje:\n\n- ¿El mensaje corresponde realmente a una asignación de turno?\n- ¿Cuántos turnos diferentes hay? (uno por cada fecha)\n- ¿Cuál es el lugar?\n- ¿Cuál es el tipo de turno? (mesas, mesero, patín, bebidas, etc.)\n- ¿Cuál es la hora?\n- ¿Qué fechas exactas con día, mes y año corresponden? (obtén el año usando la herramienta)\n- ¿Cuál es el precio? (usa siempre la herramienta)\n\n📩 Ejemplo de mensaje típico de asignación de turnos:\n\nBuen día, Está solicitado para turno  \nFecha: SÁBADO 15, DOMINGO 16 Y LUNES 17 DE NOVIEMBRE  \nHora: 8:00 AM  \nLugar: CLUB LOMAS DEL VIENTO  \nÁrea: MESAS  \nDirección: Pan-American Highway, Piedecuesta, Santander\n\n📤 Ejemplo de salida esperada cuando SÍ es un turno:\n\n{\n  \"is_shift\": true,\n  \"shifts\": [\n    {\n      \"id\": \"turno-17332498123\",\n      \"precio\": 60000,\n      \"fecha\": \"2025-11-15T00:00:00\",\n      \"lugar\": \"CLUB LOMAS DEL VIENTO\",\n      \"tipo_de_turno\": \"mesas\",\n      \"hora\": \"8:00 AM\"\n    }\n  ]\n}\n\n📤 Ejemplo de salida esperada cuando NO es un turno:\n\n{\n  \"is_shift\": false,\n  \"shifts\": []\n}\n\nEsta es la asignación de turno que te enviaron en esta ocasión:\n\n{{ $json.text ?? \"\" }}\n\n{{ $('WhatsApp Trigger').first().json.messages[0].text.body }}",
         "hasOutputParser": true,
         "options": {}
       },
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3,
       "position": [
-        432,
+        656,
         -64
       ],
       "id": "c40f2902-6c16-4e35-b282-04b9b780dc5b",
@@ -25,7 +25,7 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatMistralCloud",
       "typeVersion": 1,
       "position": [
-        384,
+        608,
         128
       ],
       "id": "52efae31-8b2c-41d6-99d5-b5e2714bcf34",
@@ -44,7 +44,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        736,
+        960,
         -64
       ],
       "id": "e3aed18b-165d-4df7-ab4f-812dd1ff0990",
@@ -92,7 +92,7 @@
       "type": "n8n-nodes-base.notion",
       "typeVersion": 2.2,
       "position": [
-        928,
+        1152,
         -64
       ],
       "id": "98eca5eb-f177-4b0e-8dd4-ebc860b04762",
@@ -114,7 +114,7 @@
       "type": "@n8n/n8n-nodes-langchain.toolCode",
       "typeVersion": 1.3,
       "position": [
-        528,
+        752,
         128
       ],
       "id": "50227279-2439-4b71-aa57-3a98e36c133d",
@@ -128,7 +128,7 @@
       "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
       "typeVersion": 1.3,
       "position": [
-        672,
+        896,
         128
       ],
       "id": "85830253-37c6-48e0-9ae6-b2ad36b445d9",
@@ -161,7 +161,7 @@
       "type": "n8n-nodes-base.notion",
       "typeVersion": 2.2,
       "position": [
-        -288,
+        -64,
         -192
       ],
       "id": "a944bb59-eda3-46cf-aee9-d6e1d0ee3537",
@@ -185,7 +185,7 @@
       "type": "n8n-nodes-base.notion",
       "typeVersion": 2.2,
       "position": [
-        -80,
+        144,
         -192
       ],
       "id": "87a158dd-65e0-432a-8796-f2c007ddd2ad",
@@ -207,8 +207,8 @@
       "type": "n8n-nodes-base.whatsAppTrigger",
       "typeVersion": 1,
       "position": [
-        -1264,
-        -48
+        -1312,
+        -64
       ],
       "id": "0d262c45-bc4d-4885-8b81-929ce089631e",
       "name": "WhatsApp Trigger",
@@ -223,7 +223,7 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "=Eres un agente de clasificación de intención.\n\nTu tarea es analizar el mensaje proporcionado y determinar únicamente la intención principal del usuario respecto a los turnos de mesero.\n\nDebes clasificar el mensaje en una de las siguientes acciones:\n\n\"create\": el usuario desea crear o registrar un nuevo turno de mesero.\n\n\"update\": el usuario desea modificar, cambiar o corregir un turno de mesero existente.\n\n\"delete\": el usuario desea eliminar, cancelar o borrar un turno de mesero.\n\n\"nothing\": el mensaje no está relacionado con la creación, modificación o eliminación de turnos de mesero, o no expresa una acción clara.\n\nReglas estrictas\n\nAnaliza únicamente el contenido del mensaje.\n\nNo hagas suposiciones fuera del texto.\n\nNo expliques tu decisión.\n\nNo agregues texto adicional.\n\nResponde exclusivamente con un objeto JSON válido en el siguiente formato:\n\n{\n  \"action\": \"create\" | \"update\" | \"delete\" | \"nothing\"\n}\n\nMensaje del usuario a analizar:\n{{ $json.messages[0].text.body }}",
+        "text": "=Eres un agente de clasificación de intención.\n\nTu tarea es analizar el mensaje proporcionado y determinar únicamente la intención principal del usuario respecto a los turnos de mesero.\n\nDebes clasificar el mensaje en una de las siguientes acciones:\n\n\"create\": el usuario desea crear o registrar un nuevo turno de mesero.\n\n\"update\": el usuario desea modificar, cambiar o corregir un turno de mesero existente.\n\n\"delete\": el usuario desea eliminar, cancelar o borrar un turno de mesero.\n\n\"price\": el usuario desea saber en que valor va la quince del mes\n\n\"nothing\": el mensaje no está relacionado con la creación, modificación o eliminación de turnos de mesero, o no expresa una acción clara.\n\nReglas estrictas\n\nAnaliza únicamente el contenido del mensaje.\n\nNo expliques tu decisión.\n\nNo agregues texto adicional.\n\nResponde exclusivamente con un objeto JSON válido en el siguiente formato:\n\n{\n  \"action\": \"create\" | \"update\" | \"delete\" | \"nothing\" | \"price\"\n}\n\nMensaje del usuario a analizar:\n{{ $json.messages[0].text.body }}",
         "hasOutputParser": true,
         "options": {}
       },
@@ -231,7 +231,7 @@
       "typeVersion": 3,
       "position": [
         -1072,
-        -48
+        -64
       ],
       "id": "5ec5511a-e835-476e-a8a0-f7d727aaa323",
       "name": "AI Agent1"
@@ -245,7 +245,7 @@
       "typeVersion": 1,
       "position": [
         -1072,
-        144
+        128
       ],
       "id": "cb857217-4a84-4aa1-b64d-7d09598d26a3",
       "name": "Mistral Cloud Chat Model1",
@@ -259,13 +259,13 @@
     {
       "parameters": {
         "schemaType": "manual",
-        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"action\": {\n      \"type\": \"string\",\n      \"enum\": [\"create\", \"update\", \"delete\", \"nothing\"]\n    }\n  },\n  \"required\": [\"action\"],\n  \"additionalProperties\": false\n}\n"
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"action\": {\n      \"type\": \"string\",\n      \"enum\": [\"create\", \"update\", \"delete\", \"nothing\", \"price\"]\n    }\n  },\n  \"required\": [\"action\"],\n  \"additionalProperties\": false\n}\n"
       },
       "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
       "typeVersion": 1.3,
       "position": [
         -928,
-        192
+        176
       ],
       "id": "fae7e25f-5d00-493a-a07a-a80d894eae09",
       "name": "Structured Output Parser1"
@@ -274,6 +274,29 @@
       "parameters": {
         "rules": {
           "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "4503cd25-c32f-490b-a29e-bf812f7a8f88",
+                    "leftValue": "={{ $json.output.action }}",
+                    "rightValue": "price",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
             {
               "conditions": {
                 "options": {
@@ -372,8 +395,8 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.3,
       "position": [
-        -736,
-        -80
+        -672,
+        -112
       ],
       "id": "9d213256-dcd9-48c6-a0b8-cf8912ff36c9",
       "name": "Switch"
@@ -406,7 +429,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -512,
+        -288,
         -176
       ],
       "id": "d9375dae-6b5d-4361-be2a-d29e308589f0",
@@ -420,7 +443,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        144,
+        368,
         32
       ],
       "id": "02cf79c4-19c8-4c18-9673-77c11e62e62b",
@@ -437,8 +460,8 @@
       "type": "n8n-nodes-base.whatsApp",
       "typeVersion": 1.1,
       "position": [
-        -512,
-        208
+        -288,
+        240
       ],
       "id": "24f8c733-b06c-4e11-8632-1896b8060d3f",
       "name": "Send message",
@@ -477,7 +500,7 @@
       "type": "n8n-nodes-base.notion",
       "typeVersion": 2.2,
       "position": [
-        -288,
+        -64,
         32
       ],
       "id": "b592c288-0011-4a7b-901c-ed8a5f9f3cce",
@@ -501,7 +524,7 @@
       "type": "n8n-nodes-base.notion",
       "typeVersion": 2.2,
       "position": [
-        -80,
+        144,
         32
       ],
       "id": "ff4f43d3-2287-4c26-ac13-dd9bdadae176",
@@ -541,8 +564,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -512,
-        32
+        -288,
+        48
       ],
       "id": "312effd7-61cb-4856-a4e4-4305e6f7cf98",
       "name": "If",
@@ -559,7 +582,7 @@
       "type": "n8n-nodes-base.whatsApp",
       "typeVersion": 1.1,
       "position": [
-        144,
+        368,
         -192
       ],
       "id": "41eeaa73-f205-4d44-8cc2-79d9a2a780f0",
@@ -584,7 +607,7 @@
       "type": "n8n-nodes-base.whatsApp",
       "typeVersion": 1.1,
       "position": [
-        1376,
+        1600,
         16
       ],
       "id": "65aaba61-ad83-450b-9b4a-6c19318c63ad",
@@ -610,7 +633,7 @@
           "conditions": [
             {
               "id": "6e7c3ee4-746f-4226-9979-af46b70a62ea",
-              "leftValue": "={{ $('Switch').first().json.output.action }}",
+              "leftValue": "={{ $('AI Agent1').first().json.output.action }}",
               "rightValue": "update",
               "operator": {
                 "type": "string",
@@ -626,7 +649,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        1136,
+        1360,
         -64
       ],
       "id": "a95d4145-b7b4-4249-93cb-ff6be2f279a3",
@@ -643,7 +666,7 @@
       "type": "n8n-nodes-base.whatsApp",
       "typeVersion": 1.1,
       "position": [
-        1376,
+        1600,
         -144
       ],
       "id": "3a0e1454-f5d3-4379-9a46-d7c3a062cb17",
@@ -654,6 +677,288 @@
         "whatsAppApi": {
           "id": "5hn9BODf5lXKOVN0",
           "name": "WhatsApp account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "30 23 1,15 * *"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -912,
+        -576
+      ],
+      "id": "e917b0e0-9852-4cca-a447-d250f8cb5968",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "7daf5d3a-2e52-4924-b30d-c51e97c3de19",
+              "leftValue": "={{ new Date().getDate() }}",
+              "rightValue": 16,
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -288,
+        -384
+      ],
+      "id": "a445a377-e597-4f25-90df-ddb9b2ff3ee4",
+      "name": "If3",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "jsCode": "const shifts = $input.all()\n\nconst prices = shifts.map((shift) => shift.json.property_valor)\n\nconst summary = prices.reduce((acc, n) => acc + n, 0);\n\nconst summaryCop = new Intl.NumberFormat('es-CO', {\n  style: 'currency',\n  currency: 'COP',\n  minimumFractionDigits: 0\n}).format(summary);\n\nreturn [{ \n  summary: summaryCop.replace(/\\s+/g, ''),\n  summaryNum: summary\n}]"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        -400
+      ],
+      "id": "f6b15594-dab4-4075-9e1b-488b6a8ea88d",
+      "name": "Code in JavaScript2"
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "896483376887360",
+        "recipientPhoneNumber": "=573219074881",
+        "textBody": "=La quincena va en {{ $json.summary }} COP.",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1.1,
+      "position": [
+        432,
+        -400
+      ],
+      "id": "a13d8499-a2eb-4612-ae3a-f1402e2ca0de",
+      "name": "Send message4",
+      "webhookId": "18d4a0ba-af87-4278-9e86-fcd176d4cfa1",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "5hn9BODf5lXKOVN0",
+          "name": "WhatsApp account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "getAll",
+        "databaseId": {
+          "__rl": true,
+          "value": "2a97b9ad-7306-80f4-aa39-d85da3e68a26",
+          "mode": "list",
+          "cachedResultName": "Turnos mesero",
+          "cachedResultUrl": "https://www.notion.so/2a97b9ad730680f4aa39d85da3e68a26"
+        },
+        "filterType": "manual",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "key": "Fecha|date",
+              "condition": "before",
+              "date": "={{ new Date() }}"
+            },
+            {
+              "key": "Fecha|date",
+              "condition": "after",
+              "date": "={{ new Date(new Date().getFullYear(), new Date().getMonth() - 1, 15) }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        48,
+        -368
+      ],
+      "id": "ea7b28e4-2c20-49c2-9916-5ed31ed1252b",
+      "name": "Quincena 2",
+      "credentials": {
+        "notionApi": {
+          "id": "RAMqWHgP8zteCpFh",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "getAll",
+        "databaseId": {
+          "__rl": true,
+          "value": "2a97b9ad-7306-80f4-aa39-d85da3e68a26",
+          "mode": "list",
+          "cachedResultName": "Turnos mesero",
+          "cachedResultUrl": "https://www.notion.so/2a97b9ad730680f4aa39d85da3e68a26"
+        },
+        "filterType": "manual",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "key": "Fecha|date",
+              "condition": "on_or_before",
+              "date": "={{ new Date() }}"
+            },
+            {
+              "key": "Fecha|date",
+              "condition": "after",
+              "date": "={{ new Date(new Date().getFullYear(), new Date().getMonth(), 0) }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        -96,
+        -400
+      ],
+      "id": "58299ace-4b51-4e0f-b565-b5ab59c38529",
+      "name": "Quincena 1",
+      "credentials": {
+        "notionApi": {
+          "id": "RAMqWHgP8zteCpFh",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "6bcebf59-81c4-4b6c-ad41-99dbe9a46928",
+              "leftValue": "={{ new Date().getDate() }}",
+              "rightValue": 15,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "d40d1ac6-3582-4e1e-aa86-8b3461d0b883",
+              "leftValue": "={{ parseInt(new Date().getMonth()) }}",
+              "rightValue": "={{ parseInt(new Date(Date.now() + 86400000).getMonth()) }}\n",
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -672,
+        -368
+      ],
+      "id": "1080c4e3-ba8c-4ae2-a2a5-350a5fe95180",
+      "name": "If4"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        432,
+        -560
+      ],
+      "id": "377731ed-394e-4e8a-83b3-a6b446bcceaa",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "databaseId": {
+          "__rl": true,
+          "value": "2a97b9ad-7306-80f4-aa39-d85da3e68a26",
+          "mode": "list",
+          "cachedResultName": "Turnos mesero",
+          "cachedResultUrl": "https://www.notion.so/2a97b9ad730680f4aa39d85da3e68a26"
+        },
+        "title": "=💰 Quincena",
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Valor|number",
+              "numberValue": "={{ $('Code in JavaScript2').first().json.summaryNum }}"
+            },
+            {
+              "key": "Fecha|date",
+              "date": "={{ new Date() }}"
+            },
+            {
+              "key": "Lugar|rich_text",
+              "textContent": "Quincena"
+            },
+            {
+              "key": "Tipo|rich_text",
+              "textContent": "Quincena"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        640,
+        -560
+      ],
+      "id": "41ac5542-715b-4597-af75-3c831bb79ad1",
+      "name": "Create a database page1",
+      "executeOnce": true,
+      "credentials": {
+        "notionApi": {
+          "id": "RAMqWHgP8zteCpFh",
+          "name": "Notion account"
         }
       }
     }
@@ -785,6 +1090,13 @@
       "main": [
         [
           {
+            "node": "If3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
             "node": "If1",
             "type": "main",
             "index": 0
@@ -896,13 +1208,107 @@
           }
         ]
       ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "If4",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If3": {
+      "main": [
+        [
+          {
+            "node": "Quincena 1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Quincena 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript2": {
+      "main": [
+        [
+          {
+            "node": "Send message4",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Quincena 2": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Quincena 1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If4": {
+      "main": [
+        [
+          {
+            "node": "If3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Create a database page1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "c47d6b83-2da3-4244-84d4-4ab11e637335",
+  "versionId": "e534d1cf-8101-45f7-8727-b523268c768d",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "d5b8764fac9936db34873e982e96f35d94691a523181a39ccdd1d45096b54f97"

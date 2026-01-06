@@ -8,16 +8,23 @@ La información de turnos laborales se recibe por WhatsApp en mensajes no estruc
 
 ## Solución
 
-Se diseñó un flujo automatizado que recibe mensajes reenviados a un bot de WhatsApp, interpreta su contenido mediante inteligencia artificial, valida si corresponden a un turno laboral y extrae la información relevante. El sistema aplica reglas de negocio para calcular el valor del turno y mantiene la información sincronizada en una base estructurada.
+Se diseñó un flujo automatizado que recibe mensajes reenviados a un bot de WhatsApp, interpreta su contenido mediante inteligencia artificial y detecta la intención del usuario. El sistema valida si el mensaje corresponde a la creación, edición o eliminación de un turno laboral, extrae la información relevante y aplica reglas de negocio para calcular el valor del turno, manteniendo los datos sincronizados en una base estructurada.
 
 ## Arquitectura
 
-1. El mensaje del turno es reenviado al bot de WhatsApp.
-2. El mensaje es procesado por n8n.
-3. Un agente de IA interpreta el contenido y extrae los datos.
-4. Se validan reglas de negocio (festivos y domingos).
-5. La información se guarda o actualiza en una tabla estructurada.
-6. Ediciones o eliminaciones del mensaje se reflejan automáticamente.
+1. El mensaje de asignación de turno es reenviado a un bot de WhatsApp.
+2. n8n recibe el mensaje y ejecuta un primer agente de IA que analiza la intención del contenido.
+3. Según la intención detectada (crear, editar o eliminar turno), el flujo dirige el mensaje al camino correspondiente.
+4. En el caso de ediciones o eliminaciones, el sistema utiliza la referencia al mensaje original (reply) para correlacionar la acción con el turno previamente registrado.
+5. Se aplican reglas de negocio (domingos y festivos) y se sincroniza la información en una base estructurada.
+
+## Manejo de intención y correlación de mensajes
+
+El sistema utiliza un enfoque basado en intención para interpretar las acciones del usuario. Todo flujo inicia con un mensaje de asignación de turno, el cual actúa como referencia principal.
+
+Para modificar o eliminar un turno, el usuario responde directamente a ese mensaje indicando la acción deseada. El flujo extrae el identificador del mensaje original y lo utiliza para localizar y actualizar el registro correspondiente en la base de datos.
+
+Este enfoque permite mantener consistencia lógica sin depender de eventos automáticos de edición o eliminación del proveedor de mensajería.
 
 ## Flujo de automatización
 
@@ -35,7 +42,8 @@ El flujo de n8n centraliza la lógica del sistema, gestionando la interpretació
 
 ## Limitaciones
 
-- La integración con WhatsApp depende de un bot y del reenvío manual del mensaje.
+- La integración con WhatsApp depende del reenvío manual de mensajes al bot.
+- Las ediciones o eliminaciones de turnos requieren responder al mensaje original para mantener la correlación.
 - El sistema no está desplegado como producto comercial.
 - El flujo está diseñado para un volumen moderado de mensajes.
 
