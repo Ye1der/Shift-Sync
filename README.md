@@ -10,6 +10,8 @@ La información de turnos laborales se recibe por WhatsApp en mensajes no estruc
 
 Se diseñó un flujo automatizado que recibe mensajes reenviados a un bot de WhatsApp, interpreta su contenido mediante inteligencia artificial y detecta la intención del usuario. El sistema valida si el mensaje corresponde a la creación, edición o eliminación de un turno laboral, extrae la información relevante y aplica reglas de negocio para calcular el valor del turno, manteniendo los datos sincronizados en una base estructurada.
 
+![Flujo en n8n](docs/table_data.png)
+
 ## Arquitectura
 
 1. El mensaje de asignación de turno es reenviado a un bot de WhatsApp.
@@ -17,6 +19,8 @@ Se diseñó un flujo automatizado que recibe mensajes reenviados a un bot de Wha
 3. Según la intención detectada (crear, editar o eliminar turno), el flujo dirige el mensaje al camino correspondiente.
 4. En el caso de ediciones o eliminaciones, el sistema utiliza la referencia al mensaje original (reply) para correlacionar la acción con el turno previamente registrado.
 5. Se aplican reglas de negocio (domingos y festivos) y se sincroniza la información en una base estructurada.
+6. El flujo permite consultas de estado, como el total acumulado de la quincena actual.
+7. Un proceso programado (cron) se ejecuta el día 15 y el último día del mes para consolidar y registrar el total de cada quincena.
 
 ## Manejo de intención y correlación de mensajes
 
@@ -39,14 +43,15 @@ El flujo de n8n centraliza la lógica del sistema, gestionando la interpretació
 - IA (Mistral API)
 - WhatsApp Bot
 - Notion API
+- Render (deploy)
 
 ## Limitaciones
 
 - La integración con WhatsApp depende del reenvío manual de mensajes al bot.
 - Las ediciones o eliminaciones de turnos requieren responder al mensaje original para mantener la correlación.
+- El despliegue actual utiliza un plan gratuito, lo que impone limitaciones de memoria para el procesamiento de modelos de IA.
 - El sistema no está desplegado como producto comercial.
-- El flujo está diseñado para un volumen moderado de mensajes.
 
 ## Estado del proyecto
 
-El sistema es funcional y ha sido validado en un caso real. Actualmente se encuentra en evolución, con foco en mejorar la automatización del canal de entrada y el despliegue del flujo.
+El sistema es funcional y ha sido validado en un caso real. Actualmente se encuentra en evolución, con foco en mejorar la automatización del canal de entrada y optimizar el despliegue y consumo de recursos.
